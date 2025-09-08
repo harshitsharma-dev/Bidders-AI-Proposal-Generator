@@ -1545,8 +1545,12 @@ ${profile.companyName}
                     </span>
                   </div>
 
-                  <div className="relative">
-                    <Bell className="h-6 w-6 text-gray-400 cursor-pointer hover:text-gray-600" />
+                  <div 
+                    className="relative cursor-pointer"
+                    onClick={() => setActiveTab("notifications")}
+                    title="View notifications"
+                  >
+                    <Bell className="h-6 w-6 text-gray-400 hover:text-gray-600 transition-colors" />
                     <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
                       {notifications.filter((n) => n.unread).length}
                     </span>

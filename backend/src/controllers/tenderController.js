@@ -1,6 +1,6 @@
 const TenderService = require("../services/tenderService");
 const CompanyService = require("../services/companyService");
-const TenderAggregatorService = require('../services/tenderAggregatorService');
+const TenderAggregatorService = require("../services/tenderAggregatorService");
 
 class TenderController {
   constructor() {
@@ -10,39 +10,50 @@ class TenderController {
   // Enhanced search tenders with government APIs
   async searchTenders(req, res) {
     try {
-      const { 
-        q: query, 
-        country, 
-        category, 
-        limit = 10, 
+      const {
+        q: query,
+        country,
+        category,
+        limit = 10,
         page = 1,
         countries,
         minBudget,
         maxBudget,
         region,
         requirements,
-        useGovernmentAPIs = true
+        useGovernmentAPIs = true,
       } = req.query;
 
       // If using government APIs for enhanced search
       if (useGovernmentAPIs && (countries || query)) {
-        const countryList = countries ? 
-          countries.split(',').map(c => c.toLowerCase().trim()) : 
-          country ? [country.toLowerCase()] : ['usa', 'uk', 'canada', 'australia'];
+        const countryList = countries
+          ? countries.split(",").map((c) => c.toLowerCase().trim())
+          : country
+          ? [country.toLowerCase()]
+          : ["usa", "uk", "canada", "australia"];
 
         const filters = {
           category,
           minBudget,
           maxBudget,
           region,
-          requirements: requirements ? requirements.split(',').map(r => r.trim()) : []
+          requirements: requirements
+            ? requirements.split(",").map((r) => r.trim())
+            : [],
         };
 
-        const governmentTenders = await this.aggregatorService.searchTenders(query, countryList, filters);
-        
+        const governmentTenders = await this.aggregatorService.searchTenders(
+          query,
+          countryList,
+          filters
+        );
+
         // Apply pagination
         const offset = (parseInt(page) - 1) * parseInt(limit);
-        const paginatedTenders = governmentTenders.slice(offset, offset + parseInt(limit));
+        const paginatedTenders = governmentTenders.slice(
+          offset,
+          offset + parseInt(limit)
+        );
 
         return res.json({
           success: true,
@@ -51,10 +62,10 @@ class TenderController {
             page: parseInt(page),
             limit: parseInt(limit),
             total: governmentTenders.length,
-            hasMore: offset + parseInt(limit) < governmentTenders.length
+            hasMore: offset + parseInt(limit) < governmentTenders.length,
           },
-          source: 'government_apis',
-          countries: countryList
+          source: "government_apis",
+          countries: countryList,
         });
       }
 
@@ -83,7 +94,7 @@ class TenderController {
           limit: parseInt(limit),
           total: tenders.length,
         },
-        source: 'database'
+        source: "database",
       });
     } catch (error) {
       console.error("Search tenders error:", error);
@@ -119,12 +130,14 @@ class TenderController {
           companyName: company.company_name,
           capabilities: company.capabilities || [],
           experience: company.experience || [],
-          countries: company.countries || ['usa'],
-          budget: company.budget || null
+          countries: company.countries || ["usa"],
+          budget: company.budget || null,
         };
 
-        recommendations = await this.aggregatorService.getRecommendations(companyProfile);
-        
+        recommendations = await this.aggregatorService.getRecommendations(
+          companyProfile
+        );
+
         // Limit results
         recommendations = recommendations.slice(0, parseInt(limit));
       } else {
@@ -144,7 +157,7 @@ class TenderController {
           capabilities: company.capabilities,
           countries: company.countries,
         },
-        source: useGovernmentAPIs ? 'government_apis' : 'database'
+        source: useGovernmentAPIs ? "government_apis" : "database",
       });
     } catch (error) {
       console.error("Get recommendations error:", error);
@@ -161,11 +174,11 @@ class TenderController {
     try {
       const { country } = req.params;
       const { limit = 50 } = req.query;
-      
+
       console.log(`🌍 Fetching tenders for country: ${country}`);
 
       const tenders = await this.aggregatorService.getTendersByCountry(country);
-      
+
       // Apply limit
       const limitedTenders = tenders.slice(0, parseInt(limit));
 
@@ -175,15 +188,14 @@ class TenderController {
           country: country.toUpperCase(),
           tenders: limitedTenders,
           count: limitedTenders.length,
-          total: tenders.length
-        }
+          total: tenders.length,
+        },
       });
-
     } catch (error) {
-      console.error('❌ Error fetching country tenders:', error);
+      console.error("❌ Error fetching country tenders:", error);
       res.status(500).json({
         success: false,
-        message: error.message
+        message: error.message,
       });
     }
   }
@@ -193,11 +205,13 @@ class TenderController {
     try {
       const { location } = req.params;
       const { limit = 50 } = req.query;
-      
+
       console.log(`📍 Fetching tenders for location: ${location}`);
 
-      const tenders = await this.aggregatorService.getTendersByLocation(location);
-      
+      const tenders = await this.aggregatorService.getTendersByLocation(
+        location
+      );
+
       // Apply limit
       const limitedTenders = tenders.slice(0, parseInt(limit));
 
@@ -207,16 +221,15 @@ class TenderController {
           location,
           tenders: limitedTenders,
           count: limitedTenders.length,
-          total: tenders.length
-        }
+          total: tenders.length,
+        },
       });
-
     } catch (error) {
-      console.error('❌ Error fetching location tenders:', error);
+      console.error("❌ Error fetching location tenders:", error);
       res.status(500).json({
         success: false,
-        message: 'Error fetching tenders by location',
-        error: error.message
+        message: "Error fetching tenders by location",
+        error: error.message,
       });
     }
   }
@@ -230,16 +243,15 @@ class TenderController {
         success: true,
         data: {
           countries,
-          count: countries.length
-        }
+          count: countries.length,
+        },
       });
-
     } catch (error) {
-      console.error('❌ Error getting countries:', error);
+      console.error("❌ Error getting countries:", error);
       res.status(500).json({
         success: false,
-        message: 'Error fetching countries',
-        error: error.message
+        message: "Error fetching countries",
+        error: error.message,
       });
     }
   }
@@ -406,29 +418,28 @@ class TenderController {
   async getTenderStats(req, res) {
     try {
       const { includeGovernmentAPIs = true } = req.query;
-      
+
       let stats = {
         total_tenders: 0,
         active_tenders: 0,
         countries: [],
         categories: [],
-        sources: []
+        sources: [],
       };
 
       // Get database stats
       const allTenders = await TenderService.getTenders({ limit: 1000 });
       const dbStats = {
         total_tenders: allTenders.tenders.length,
-        active_tenders: allTenders.tenders.filter(
-          (t) => t.status === "open"
-        ).length,
+        active_tenders: allTenders.tenders.filter((t) => t.status === "open")
+          .length,
         countries: [
           ...new Set(allTenders.tenders.map((t) => t.country).filter(Boolean)),
         ],
         categories: [
           ...new Set(allTenders.tenders.map((t) => t.category).filter(Boolean)),
         ],
-        source: 'database'
+        source: "database",
       };
 
       stats = { ...dbStats };
@@ -437,32 +448,36 @@ class TenderController {
       if (includeGovernmentAPIs) {
         try {
           const govStats = await this.aggregatorService.getTenderStats();
-          
+
           stats = {
             total_tenders: dbStats.total_tenders + govStats.totalTenders,
             active_tenders: dbStats.active_tenders + govStats.activeTenders,
-            countries: [...new Set([...dbStats.countries, ...govStats.countries])],
-            categories: [...new Set([...dbStats.categories, ...govStats.categories])],
-            sources: ['database', 'government_apis'],
+            countries: [
+              ...new Set([...dbStats.countries, ...govStats.countries]),
+            ],
+            categories: [
+              ...new Set([...dbStats.categories, ...govStats.categories]),
+            ],
+            sources: ["database", "government_apis"],
             breakdown: {
               database: {
                 total: dbStats.total_tenders,
                 active: dbStats.active_tenders,
                 countries: dbStats.countries,
-                categories: dbStats.categories
+                categories: dbStats.categories,
               },
               government_apis: {
                 total: govStats.totalTenders,
                 active: govStats.activeTenders,
                 countries: govStats.countries,
                 categories: govStats.categories,
-                by_country: govStats.byCountry
-              }
-            }
+                by_country: govStats.byCountry,
+              },
+            },
           };
         } catch (govError) {
-          console.warn('Government API stats unavailable:', govError.message);
-          stats.sources = ['database'];
+          console.warn("Government API stats unavailable:", govError.message);
+          stats.sources = ["database"];
           stats.government_api_error = govError.message;
         }
       }
