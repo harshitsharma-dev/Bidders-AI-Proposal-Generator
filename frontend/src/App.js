@@ -1545,7 +1545,7 @@ ${profile.companyName}
                     </span>
                   </div>
 
-                  <div 
+                  <div
                     className="relative cursor-pointer"
                     onClick={() => setActiveTab("notifications")}
                     title="View notifications"

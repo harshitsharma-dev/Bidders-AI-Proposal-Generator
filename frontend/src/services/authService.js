@@ -1,10 +1,10 @@
 // JWT Authentication Service for TenderForge
 class AuthService {
   constructor() {
-    this.baseURL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
-    this.token = localStorage.getItem('tenderforge_token');
+    this.baseURL = process.env.REACT_APP_API_URL || "http://localhost:3001/api";
+    this.token = localStorage.getItem("tenderforge_token");
     this.user = null;
-    
+
     // Initialize user from stored token
     if (this.token) {
       this.verifyToken();
@@ -15,21 +15,21 @@ class AuthService {
   setAuthData(token, user) {
     this.token = token;
     this.user = user;
-    localStorage.setItem('tenderforge_token', token);
-    localStorage.setItem('tenderforge_user', JSON.stringify(user));
+    localStorage.setItem("tenderforge_token", token);
+    localStorage.setItem("tenderforge_user", JSON.stringify(user));
   }
 
   // Clear auth data
   clearAuthData() {
     this.token = null;
     this.user = null;
-    localStorage.removeItem('tenderforge_token');
-    localStorage.removeItem('tenderforge_user');
+    localStorage.removeItem("tenderforge_token");
+    localStorage.removeItem("tenderforge_user");
   }
 
   // Get stored user data
   getStoredUser() {
-    const userData = localStorage.getItem('tenderforge_user');
+    const userData = localStorage.getItem("tenderforge_user");
     return userData ? JSON.parse(userData) : null;
   }
 
@@ -37,9 +37,9 @@ class AuthService {
   async register(userData) {
     try {
       const response = await fetch(`${this.baseURL}/auth/register`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(userData),
       });
@@ -47,17 +47,17 @@ class AuthService {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Registration failed');
+        throw new Error(data.message || "Registration failed");
       }
 
       if (data.success) {
         this.setAuthData(data.data.token, data.data.user);
         return data.data.user;
       } else {
-        throw new Error(data.message || 'Registration failed');
+        throw new Error(data.message || "Registration failed");
       }
     } catch (error) {
-      console.error('Registration error:', error);
+      console.error("Registration error:", error);
       throw error;
     }
   }
@@ -66,9 +66,9 @@ class AuthService {
   async login(email, password) {
     try {
       const response = await fetch(`${this.baseURL}/auth/login`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ email, password }),
       });
@@ -76,17 +76,17 @@ class AuthService {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Login failed');
+        throw new Error(data.message || "Login failed");
       }
 
       if (data.success) {
         this.setAuthData(data.data.token, data.data.user);
         return data.data.user;
       } else {
-        throw new Error(data.message || 'Login failed');
+        throw new Error(data.message || "Login failed");
       }
     } catch (error) {
-      console.error('Login error:', error);
+      console.error("Login error:", error);
       throw error;
     }
   }
@@ -96,15 +96,15 @@ class AuthService {
     try {
       if (this.token) {
         await fetch(`${this.baseURL}/auth/logout`, {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Authorization': `Bearer ${this.token}`,
-            'Content-Type': 'application/json',
+            Authorization: `Bearer ${this.token}`,
+            "Content-Type": "application/json",
           },
         });
       }
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error("Logout error:", error);
     } finally {
       this.clearAuthData();
     }
@@ -119,7 +119,7 @@ class AuthService {
     try {
       const response = await fetch(`${this.baseURL}/auth/me`, {
         headers: {
-          'Authorization': `Bearer ${this.token}`,
+          Authorization: `Bearer ${this.token}`,
         },
       });
 
@@ -127,7 +127,7 @@ class AuthService {
 
       if (response.ok && data.success) {
         this.user = data.data.user;
-        localStorage.setItem('tenderforge_user', JSON.stringify(this.user));
+        localStorage.setItem("tenderforge_user", JSON.stringify(this.user));
         return this.user;
       } else {
         // Token is invalid, clear auth data
@@ -135,7 +135,7 @@ class AuthService {
         return null;
       }
     } catch (error) {
-      console.error('Token verification error:', error);
+      console.error("Token verification error:", error);
       this.clearAuthData();
       return null;
     }
@@ -149,10 +149,10 @@ class AuthService {
 
     try {
       const response = await fetch(`${this.baseURL}/auth/refresh`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Authorization': `Bearer ${this.token}`,
-          'Content-Type': 'application/json',
+          Authorization: `Bearer ${this.token}`,
+          "Content-Type": "application/json",
         },
       });
 
@@ -160,14 +160,14 @@ class AuthService {
 
       if (response.ok && data.success) {
         this.token = data.data.token;
-        localStorage.setItem('tenderforge_token', this.token);
+        localStorage.setItem("tenderforge_token", this.token);
         return true;
       } else {
         this.clearAuthData();
         return false;
       }
     } catch (error) {
-      console.error('Token refresh error:', error);
+      console.error("Token refresh error:", error);
       this.clearAuthData();
       return false;
     }
@@ -176,15 +176,15 @@ class AuthService {
   // Update user profile
   async updateProfile(profileData) {
     if (!this.token) {
-      throw new Error('Not authenticated');
+      throw new Error("Not authenticated");
     }
 
     try {
       const response = await fetch(`${this.baseURL}/auth/profile`, {
-        method: 'PUT',
+        method: "PUT",
         headers: {
-          'Authorization': `Bearer ${this.token}`,
-          'Content-Type': 'application/json',
+          Authorization: `Bearer ${this.token}`,
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(profileData),
       });
@@ -192,18 +192,18 @@ class AuthService {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Profile update failed');
+        throw new Error(data.message || "Profile update failed");
       }
 
       if (data.success) {
         this.user = data.data.user;
-        localStorage.setItem('tenderforge_user', JSON.stringify(this.user));
+        localStorage.setItem("tenderforge_user", JSON.stringify(this.user));
         return this.user;
       } else {
-        throw new Error(data.message || 'Profile update failed');
+        throw new Error(data.message || "Profile update failed");
       }
     } catch (error) {
-      console.error('Profile update error:', error);
+      console.error("Profile update error:", error);
       throw error;
     }
   }
@@ -220,13 +220,13 @@ class AuthService {
 
   // Get authorization header for API requests
   getAuthHeader() {
-    return this.token ? { 'Authorization': `Bearer ${this.token}` } : {};
+    return this.token ? { Authorization: `Bearer ${this.token}` } : {};
   }
 
   // Make authenticated API request
   async authenticatedRequest(url, options = {}) {
     const headers = {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
       ...this.getAuthHeader(),
       ...options.headers,
     };
@@ -249,8 +249,8 @@ class AuthService {
       } else {
         // Refresh failed, redirect to login
         this.clearAuthData();
-        window.location.href = '/login';
-        throw new Error('Session expired');
+        window.location.href = "/login";
+        throw new Error("Session expired");
       }
     }
 
@@ -261,7 +261,7 @@ class AuthService {
   onAuthStateChanged(callback) {
     // Check current state
     callback(this.getCurrentUser());
-    
+
     // Set up periodic token verification
     const interval = setInterval(async () => {
       const user = await this.verifyToken();
@@ -277,10 +277,11 @@ class AuthService {
     return this.register({
       email,
       password,
-      fullName: userData.fullName || `${userData.firstName} ${userData.lastName}`,
+      fullName:
+        userData.fullName || `${userData.firstName} ${userData.lastName}`,
       companyName: userData.companyName,
       capabilities: userData.capabilities,
-      countries: userData.countries
+      countries: userData.countries,
     });
   }
 
@@ -307,18 +308,19 @@ class AuthService {
   // Error message mapping for compatibility
   getFirebaseErrorMessage(errorCode) {
     const errorMessages = {
-      'auth/email-already-in-use': 'An account with this email already exists.',
-      'auth/invalid-email': 'Please enter a valid email address.',
-      'auth/operation-not-allowed': 'Email/password accounts are not enabled.',
-      'auth/weak-password': 'Password should be at least 6 characters.',
-      'auth/user-disabled': 'This user account has been disabled.',
-      'auth/user-not-found': 'No account found with this email.',
-      'auth/wrong-password': 'Incorrect password.',
-      'auth/invalid-credential': 'Invalid email or password.',
-      'auth/too-many-requests': 'Too many failed login attempts. Please try again later.'
+      "auth/email-already-in-use": "An account with this email already exists.",
+      "auth/invalid-email": "Please enter a valid email address.",
+      "auth/operation-not-allowed": "Email/password accounts are not enabled.",
+      "auth/weak-password": "Password should be at least 6 characters.",
+      "auth/user-disabled": "This user account has been disabled.",
+      "auth/user-not-found": "No account found with this email.",
+      "auth/wrong-password": "Incorrect password.",
+      "auth/invalid-credential": "Invalid email or password.",
+      "auth/too-many-requests":
+        "Too many failed login attempts. Please try again later.",
     };
 
-    return errorMessages[errorCode] || 'An error occurred. Please try again.';
+    return errorMessages[errorCode] || "An error occurred. Please try again.";
   }
 }
 

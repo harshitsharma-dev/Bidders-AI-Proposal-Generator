@@ -1,42 +1,48 @@
 // controllers/proposalController.js
-const openaiService = require('../services/geminiService');
+const openaiService = require("../services/geminiService");
 
 class ProposalController {
   // Generate AI proposal for a tender
   static async generateProposal(req, res) {
     try {
-      const { tenderId, tenderDetails, companyInfo, customRequirements } = req.body;
+      const { tenderId, tenderDetails, companyInfo, customRequirements } =
+        req.body;
       const userId = req.user.id;
 
       // Validate required fields
       if (!tenderId || !tenderDetails) {
         return res.status(400).json({
           success: false,
-          message: 'Tender ID and details are required'
+          message: "Tender ID and details are required",
         });
       }
 
-      console.log(`🤖 Generating proposal for user ${userId}, tender ${tenderId}`);
+      console.log(
+        `🤖 Generating proposal for user ${userId}, tender ${tenderId}`
+      );
 
       // Prepare context for AI proposal generation
       const proposalContext = {
         tender: {
           id: tenderId,
-          title: tenderDetails.title || 'Government Tender',
-          description: tenderDetails.description || '',
-          requirements: tenderDetails.requirements || '',
-          budget: tenderDetails.budget || 'Not specified',
-          deadline: tenderDetails.deadline || 'Not specified',
-          location: tenderDetails.location || 'Not specified',
-          category: tenderDetails.category || 'General'
+          title: tenderDetails.title || "Government Tender",
+          description: tenderDetails.description || "",
+          requirements: tenderDetails.requirements || "",
+          budget: tenderDetails.budget || "Not specified",
+          deadline: tenderDetails.deadline || "Not specified",
+          location: tenderDetails.location || "Not specified",
+          category: tenderDetails.category || "General",
         },
         company: {
-          name: companyInfo?.companyName || req.user.companyName || 'Your Company',
+          name:
+            companyInfo?.companyName || req.user.companyName || "Your Company",
           capabilities: companyInfo?.capabilities || [],
-          experience: companyInfo?.experience || 'Extensive experience in government contracting',
-          teamSize: companyInfo?.teamSize || 'Professional team'
+          experience:
+            companyInfo?.experience ||
+            "Extensive experience in government contracting",
+          teamSize: companyInfo?.teamSize || "Professional team",
         },
-        customRequirements: customRequirements || ''
+        customRequirements: customRequirements || "",
       };
 
       // Generate proposal using AI service
@@ -50,52 +56,54 @@ class ProposalController {
         userId,
         title: `Proposal for ${proposalContext.tender.title}`,
         content: aiResponse,
-        status: 'draft',
+        status: "draft",
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         metadata: {
-          generatedBy: 'AI',
+          generatedBy: "AI",
           tenderTitle: proposalContext.tender.title,
-          companyName: proposalContext.company.name
-        }
+          companyName: proposalContext.company.name,
+        },
       };
 
       console.log(`✅ Proposal generated successfully for tender ${tenderId}`);
 
       res.json({
         success: true,
-        message: 'Proposal generated successfully',
+        message: "Proposal generated successfully",
         data: {
           proposal,
           usage: {
             creditsUsed: 1,
-            remainingCredits: 1 // Updated to reflect 2 per hour limit
-          }
-        }
+            remainingCredits: 1, // Updated to reflect 2 per hour limit
+          },
+        },
       });
-
     } catch (error) {
-      console.error('❌ Error generating proposal:', error);
-      
+      console.error("❌ Error generating proposal:", error);
+
       // Handle specific AI service errors
-      if (error.message.includes('API key')) {
+      if (error.message.includes("API key")) {
         return res.status(500).json({
           success: false,
-          message: 'AI service configuration error. Please contact support.'
+          message: "AI service configuration error. Please contact support.",
         });
       }
-      
-      if (error.message.includes('rate limit')) {
+
+      if (error.message.includes("rate limit")) {
         return res.status(429).json({
           success: false,
-          message: 'AI service rate limit exceeded. Please try again later.'
+          message: "AI service rate limit exceeded. Please try again later.",
         });
       }
 
       res.status(500).json({
         success: false,
-        message: 'Failed to generate proposal',
-        error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+        message: "Failed to generate proposal",
+        error:
+          process.env.NODE_ENV === "development"
+            ? error.message
+            : "Internal server error",
       });
     }
   }
@@ -113,30 +121,30 @@ class ProposalController {
       const mockProposals = [
         {
           id: `prop_${Date.now()}_1`,
-          tenderId: 'tender_123',
-          title: 'IT Infrastructure Modernization Proposal',
-          status: 'submitted',
+          tenderId: "tender_123",
+          title: "IT Infrastructure Modernization Proposal",
+          status: "submitted",
           createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
           updatedAt: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(),
-          tenderTitle: 'Government IT Infrastructure Upgrade',
-          estimatedValue: '$250,000'
+          tenderTitle: "Government IT Infrastructure Upgrade",
+          estimatedValue: "$250,000",
         },
         {
           id: `prop_${Date.now()}_2`,
-          tenderId: 'tender_456',
-          title: 'Security Consulting Services Proposal',
-          status: 'draft',
+          tenderId: "tender_456",
+          title: "Security Consulting Services Proposal",
+          status: "draft",
           createdAt: new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString(),
           updatedAt: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
-          tenderTitle: 'Cybersecurity Assessment Services',
-          estimatedValue: '$150,000'
-        }
+          tenderTitle: "Cybersecurity Assessment Services",
+          estimatedValue: "$150,000",
+        },
       ];
 
       // Filter by status if provided
       let filteredProposals = mockProposals;
       if (status) {
-        filteredProposals = mockProposals.filter(p => p.status === status);
+        filteredProposals = mockProposals.filter((p) => p.status === status);
       }
 
       // Simulate pagination
@@ -152,16 +160,15 @@ class ProposalController {
             page: parseInt(page),
             limit: parseInt(limit),
             total: filteredProposals.length,
-            totalPages: Math.ceil(filteredProposals.length / limit)
-          }
-        }
+            totalPages: Math.ceil(filteredProposals.length / limit),
+          },
+        },
       });
-
     } catch (error) {
-      console.error('❌ Error fetching proposals:', error);
+      console.error("❌ Error fetching proposals:", error);
       res.status(500).json({
         success: false,
-        message: 'Failed to fetch proposals'
+        message: "Failed to fetch proposals",
       });
     }
   }
@@ -179,7 +186,7 @@ class ProposalController {
       if (!proposalId) {
         return res.status(400).json({
           success: false,
-          message: 'Proposal ID is required'
+          message: "Proposal ID is required",
         });
       }
 
@@ -188,22 +195,21 @@ class ProposalController {
         id: proposalId,
         ...updateData,
         updatedAt: new Date().toISOString(),
-        updatedBy: userId
+        updatedBy: userId,
       };
 
       res.json({
         success: true,
-        message: 'Proposal updated successfully',
+        message: "Proposal updated successfully",
         data: {
-          proposal: updatedProposal
-        }
+          proposal: updatedProposal,
+        },
       });
-
     } catch (error) {
-      console.error('❌ Error updating proposal:', error);
+      console.error("❌ Error updating proposal:", error);
       res.status(500).json({
         success: false,
-        message: 'Failed to update proposal'
+        message: "Failed to update proposal",
       });
     }
   }
@@ -218,31 +224,30 @@ class ProposalController {
 
       // In real app, validate proposal exists and belongs to user
       // Then update status to 'submitted'
-      
+
       const submittedProposal = {
         id: proposalId,
-        status: 'submitted',
+        status: "submitted",
         submittedAt: new Date().toISOString(),
-        submittedBy: userId
+        submittedBy: userId,
       };
 
       res.json({
         success: true,
-        message: 'Proposal submitted successfully',
+        message: "Proposal submitted successfully",
         data: {
           proposal: submittedProposal,
           submissionDetails: {
             submittedAt: submittedProposal.submittedAt,
-            confirmationNumber: `CONF_${proposalId}_${Date.now()}`
-          }
-        }
+            confirmationNumber: `CONF_${proposalId}_${Date.now()}`,
+          },
+        },
       });
-
     } catch (error) {
-      console.error('❌ Error submitting proposal:', error);
+      console.error("❌ Error submitting proposal:", error);
       res.status(500).json({
         success: false,
-        message: 'Failed to submit proposal'
+        message: "Failed to submit proposal",
       });
     }
   }
@@ -263,7 +268,9 @@ TENDER DETAILS:
 
 COMPANY INFORMATION:
 - Company Name: ${context.company.name}
-- Capabilities: ${context.company.capabilities.join(', ') || 'Professional services'}
+- Capabilities: ${
+      context.company.capabilities.join(", ") || "Professional services"
+    }
 - Experience: ${context.company.experience}
 - Team: ${context.company.teamSize}
 
