@@ -1,0 +1,53 @@
+{
+  "name": "tenderforge-backend",
+  "version": "1.0.0",
+  "description": "Backend API for TenderForge - AI-Powered Tender Marketplace Platform",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:migrate": "prisma migrate dev",
+    "db:seed": "node prisma/seed.js",
+    "scrape:usa": "node scrapers/usa/samGovScraper.js",
+    "scrape:uk": "node scrapers/uk/tedScraper.js",
+    "scrape:all": "node scripts/scrapeAll.js"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "@pinecone-database/pinecone": "^6.1.2",
+    "@prisma/client": "^6.15.0",
+    "axios": "^1.11.0",
+    "bcryptjs": "^3.0.2",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.2",
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.1.0",
+    "express-validator": "^7.2.1",
+    "firebase": "^12.2.1",
+    "firebase-admin": "^13.5.0",
+    "helmet": "^8.1.0",
+    "joi": "^18.0.1",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^2.0.2",
+    "nodemailer": "^7.0.6",
+    "openai": "^5.19.1",
+    "prisma": "^6.15.0",
+    "puppeteer": "^24.19.0",
+    "redis": "^5.8.2",
+    "sharp": "^0.34.3",
+    "stripe": "^18.5.0",
+    "winston": "^3.17.0",
+    "xml2js": "^0.6.2"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "collectCoverageFrom": [
+      "src/**/*.js",
+      "!src/config/**"
+    ]
+  }
+}

@@ -1,0 +1,171 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  extensions = [vector]
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  role      Role     @default(BIDDER)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
+  companies     Company[]
+  notifications Notification[]
+
+  @@map("users")
+}
+
+model Company {
+  id                String   @id @default(cuid())
+  userId            String
+  companyName       String
+  registrationNum   String?
+  description       String?
+  website           String?
+  phone             String?
+  address           String?
+  capabilities      String[]
+  certifications    String[]
+  countries         String[]
+  experienceYears   Int      @default(0)
+  completedProjects Int      @default(0)
+  successRate       Decimal  @default(0)
+  profileEmbedding  Unsupported("vector(1536)")?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relationships
+  user      User       @relation(fields: [userId], references: [id])
+  proposals Proposal[]
+  payments  Payment[]
+
+  @@map("companies")
+}
+
+model Tender {
+  id           String    @id @default(cuid())
+  title        String
+  description  String
+  country      String
+  budget       BigInt?
+  currency     String    @default("USD")
+  deadline     DateTime?
+  category     String?
+  requirements String[]
+  sourceUrl    String?
+  sourceApi    String?
+  embedding    Unsupported("vector(1536)")?
+  status       TenderStatus @default(OPEN)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  // Relationships
+  proposals Proposal[]
+
+  @@map("tenders")
+}
+
+model Proposal {
+  id           String   @id @default(cuid())
+  tenderId     String
+  companyId    String
+  content      String
+  aiGenerated  Boolean  @default(false)
+  status       ProposalStatus @default(DRAFT)
+  submittedAt  DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relationships
+  tender   Tender    @relation(fields: [tenderId], references: [id])
+  company  Company   @relation(fields: [companyId], references: [id])
+  payments Payment[]
+
+  @@map("proposals")
+}
+
+model Payment {
+  id                    String   @id @default(cuid())
+  proposalId            String
+  companyId             String
+  amount                BigInt
+  currency              String   @default("USD")
+  stripePaymentIntentId String?
+  status                PaymentStatus @default(PENDING)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  // Relationships
+  proposal Proposal @relation(fields: [proposalId], references: [id])
+  company  Company  @relation(fields: [companyId], references: [id])
+
+  @@map("payments")
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  message   String
+  type      NotificationType
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  // Relationships
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("notifications")
+}
+
+// Enums
+enum Role {
+  ADMIN
+  BIDDER
+  GOVERNMENT
+}
+
+enum TenderStatus {
+  DRAFT
+  OPEN
+  CLOSED
+  AWARDED
+  CANCELLED
+}
+
+enum ProposalStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  ACCEPTED
+  REJECTED
+  WITHDRAWN
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+  REFUNDED
+}
+
+enum NotificationType {
+  TENDER_MATCH
+  PROPOSAL_UPDATE
+  PAYMENT_UPDATE
+  SYSTEM_ALERT
+}
