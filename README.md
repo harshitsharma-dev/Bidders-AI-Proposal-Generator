@@ -1,1 +1,0 @@
-# Bidders-AI-Proposal-Generator
