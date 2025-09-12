@@ -4,10 +4,10 @@ const cors = require("cors");
 const helmet = require("helmet");
 
 // Import services
-const openaiService = require("./services/openaiService");
+const geminiService = require("./services/geminiService");
 const tenderService = require("./services/tenderService");
 const companyService = require("./services/companyService");
-const paymentService = require("./services/paymentService");
+// const paymentService = require("./services/paymentService");
 
 // Import controllers
 const TenderController = require("./controllers/tenderController");
@@ -18,7 +18,7 @@ const { authenticateUser, optionalAuth } = require("./middleware/auth");
 const app = express();
 
 // Initialize services
-const openaiServiceInstance = new openaiService();
+const geminiServiceInstance = new geminiService();
 
 // Basic middleware
 app.use(helmet());
@@ -40,9 +40,9 @@ app.get("/api/health", (req, res) => {
     status: "healthy",
     timestamp: new Date().toISOString(),
     services: {
-      openai: process.env.OPENAI_API_KEY ? "configured" : "missing_api_key",
+      gemini: process.env.GEMINI_API_KEY ? "configured" : "missing_api_key",
       firebase: "connected",
-      vector: process.env.OPENAI_API_KEY ? "configured" : "missing_api_key",
+      vector: process.env.GEMINI_API_KEY ? "configured" : "missing_api_key",
     },
   });
 });
@@ -54,20 +54,20 @@ app.get("/api/models", async (req, res) => {
     // So we'll return the commonly available models
     const models = [
       {
-        name: "gpt-3.5-turbo",
+        name: "gemini-2.5-flash",
         description: "Fast and efficient for most tasks",
-      },
+      }/*,
       { name: "gpt-4", description: "Most capable model (requires paid plan)" },
       {
         name: "gpt-4-turbo",
         description: "Latest GPT-4 with better performance",
-      },
+      },*/
     ];
 
     res.json({
       success: true,
       models: models,
-      current: "gpt-3.5-turbo",
+      current: "gemini-2.5-flash",
     });
   } catch (error) {
     console.error("Error listing models:", error);
@@ -87,18 +87,19 @@ app.post("/api/proposals/generate", async (req, res) => {
       });
     }
 
-    console.log("Generating proposal with OpenAI for:", tender.title);
+    console.log("Generating proposal with Gemini for:", tender.title);
 
-    const proposal = await openaiServiceInstance.generateProposal(
+    const proposal = await geminiServiceInstance.generateProposal(
       tender,
       company
     );
 
     res.json({
       success: true,
+      id: `prop_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
       proposal: proposal,
       generatedAt: new Date().toISOString(),
-      model: "gpt-3.5-turbo",
+      model: "gemini-2.5-flash",
     });
   } catch (error) {
     console.error("Error generating proposal:", error);
@@ -109,6 +110,57 @@ app.post("/api/proposals/generate", async (req, res) => {
     });
   }
 });
+/*
+app.post("/api/proposals/:id/edit", async (req, res) => {
+  try {
+      const proposalId = req.params.id;
+      const { currentContent, userMessage } = req.body;
+      // const userId = req.user.id
+
+      if (!proposalId || !currentContent || !userMessage) {
+        return res.status(400).json({
+          success: false,
+          message: "Proposal ID, currentContent and userMessage are required",
+        })
+      }
+
+      console.log(`Editing proposal ${proposalId}`)
+
+      const editPrompt = `
+      You are editing a business proposal document.
+Here is the current proposal:
+
+${currentContent}
+
+The user wants the following modifications:
+"${userMessage}"
+
+Please return the updated proposal text with ONLY the requested changes applied, while preserving the rest of the content, formatting, and professionalism.
+      `
+    // Call Gemini service
+    const updatedContent = await geminiServiceInstance.generateText(editPrompt);
+
+    const updatedProposal = {
+      id: proposalId,
+      content: updatedContent,
+      updatedAt: new Date().toISOString()
+    };
+
+    res.json({
+      success: true,
+      message: "Proposal edited successfully",
+      data: { proposal: updatedProposal },
+    });
+  } catch (error) {
+    console.error("❌ Error editing proposal:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to edit proposal",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
+    });
+  }
+});
+*/
 
 // Authentication routes (add before other routes)
 const authRoutes = require("./routes/auth");
@@ -186,7 +238,7 @@ app.put("/api/companies/profile", async (req, res) => {
   }
 });
 
-// Payment routes
+/* Payment routes
 app.post("/api/payments/create-intent", async (req, res) => {
   try {
     const { amount, currency, metadata } = req.body;
@@ -333,7 +385,7 @@ app.post(
     }
   }
 );
-
+*/
 // Basic route
 app.get("/api", (req, res) => {
   res.json({
@@ -358,8 +410,8 @@ app.listen(PORT, () => {
   console.log(`📍 Health check: http://localhost:${PORT}/health`);
   console.log(`📍 API info: http://localhost:${PORT}/api`);
   console.log(
-    `🤖 OpenAI: ${
-      process.env.OPENAI_API_KEY ? "Configured" : "Missing API Key"
+    `🤖 Gemini: ${
+      process.env.GEMINI_API_KEY ? "Configured" : "Missing API Key"
     }`
   );
   console.log(

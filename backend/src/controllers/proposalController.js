@@ -1,6 +1,6 @@
 // controllers/proposalController.js
-const openaiService = require("../services/geminiService");
-
+const geminiService = require("../services/geminiService");
+const geminiServiceInstance = new geminiService();
 class ProposalController {
   // Generate AI proposal for a tender
   static async generateProposal(req, res) {
@@ -47,11 +47,11 @@ class ProposalController {
 
       // Generate proposal using AI service
       const proposalPrompt = this.buildProposalPrompt(proposalContext);
-      const aiResponse = await openaiService.generateText(proposalPrompt);
+      const aiResponse = await geminiServiceInstance.generateText(proposalPrompt);
 
       // Structure the response
       const proposal = {
-        id: `prop_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        id: `prop_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
         tenderId,
         userId,
         title: `Proposal for ${proposalContext.tender.title}`,
@@ -67,7 +67,7 @@ class ProposalController {
       };
 
       console.log(`✅ Proposal generated successfully for tender ${tenderId}`);
-
+      console.log(`${proposal}`)
       res.json({
         success: true,
         message: "Proposal generated successfully",
@@ -213,6 +213,57 @@ class ProposalController {
       });
     }
   }
+
+  // AI-powered editing of proposals
+  static async editProposal(req, res) {
+    try {
+      const proposalId = req.params.id;
+      const { currentContent, userMessage } = req.body;
+      // const userId = req.user.id
+
+      if (!proposalId || !currentContent || !userMessage) {
+        return res.status(400).json({
+          success: false,
+          message: "Proposal ID, currentContent and userMessage are required",
+        })
+      }
+
+      console.log(`Editing proposal ${proposalId}`)
+
+      const editPrompt = `
+      You are editing a business proposal document.
+Here is the current proposal:
+
+${currentContent}
+
+The user wants the following modifications:
+"${userMessage}"
+
+Please return the updated proposal text with ONLY the requested changes applied, while preserving the rest of the content, formatting, and professionalism.
+      `
+    // Call Gemini service
+    const updatedContent = await geminiServiceInstance.editProposal(editPrompt);
+
+    const updatedProposal = {
+      id: proposalId,
+      content: updatedContent,
+      updatedAt: new Date().toISOString()
+    };
+
+    res.json({
+      success: true,
+      message: "Proposal edited successfully",
+      data: { proposal: updatedProposal },
+    });
+  } catch (error) {
+    console.error("❌ Error editing proposal:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to edit proposal",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
+    });
+  }
+}
 
   // Submit proposal
   static async submitProposal(req, res) {

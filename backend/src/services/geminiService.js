@@ -6,7 +6,7 @@ class GeminiService {
     this.genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
     // Use flash model for faster responses and lower rate limits
     this.model = this.genAI.getGenerativeModel({
-      model: "gemini-1.5-flash",
+      model: "gemini-2.5-flash",
       generationConfig: {
         temperature: 0.7,
         topP: 0.8,
@@ -45,6 +45,17 @@ class GeminiService {
         }
       }
 
+      throw error;
+    }
+  }
+
+  async editProposal(editPrompt) {
+    try {
+      const result = await this.model.generateContent(editPrompt);
+      const response = await result.response;
+      return response.text();
+    } catch (error) {
+      console.error("Gemini API Error:", error);
       throw error;
     }
   }
