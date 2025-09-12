@@ -46,6 +46,16 @@ class ApiService {
     });
   }
 
+  async editProposal(proposalId, currentContent, userMessage) {
+    return this.makeRequest(`/api/proposals/${proposalId}/edit`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ currentContent, userMessage }),
+    });
+  }
+
   // Store tender in Firebase
   async storeTender(tenderData) {
     return this.makeRequest("/api/tenders", {
