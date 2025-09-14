@@ -167,6 +167,10 @@ app.use("/api/auth", authRoutes);
 const proposalRoutes = require("./routes/proposals");
 app.use("/api/proposals", proposalRoutes);
 
+// Subscription routes
+const subscriptionRoutes = require("./routes/subscriptions");
+app.use("/api/subscriptions", subscriptionRoutes);
+
 // Tender routes
 app.post("/api/tenders", async (req, res) => {
   try {

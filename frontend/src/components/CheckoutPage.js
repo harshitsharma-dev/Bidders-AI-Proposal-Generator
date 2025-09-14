@@ -127,13 +127,13 @@ const CheckoutForm = ({ selectedPlan, onBack, onPaymentSuccess }) => {
               <span className="font-medium">${selectedPlan.price}/month</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600">Tax</span>
-              <span className="font-medium">$0.00</span>
+              <span className="text-gray-600">GST (10%)</span>
+              <span className="font-medium">${(selectedPlan.price * 0.1).toFixed(2)}</span>
             </div>
             <div className="border-t pt-3">
               <div className="flex justify-between text-lg font-semibold">
                 <span>Total</span>
-                <span>${selectedPlan.price}/month</span>
+                <span>${(selectedPlan.price * 1.1).toFixed(2)}/month</span>
               </div>
             </div>
           </div>
@@ -304,7 +304,7 @@ const CheckoutForm = ({ selectedPlan, onBack, onPaymentSuccess }) => {
               ) : (
                 <div className="flex items-center">
                   <CreditCard className="h-5 w-5 mr-2" />
-                  Subscribe for ${selectedPlan.price}/month
+                  Subscribe for ${(selectedPlan.price * 1.1).toFixed(2)}/month
                 </div>
               )}
             </button>
