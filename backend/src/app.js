@@ -47,27 +47,24 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-// List available OpenAI models
+// List available Gemini models
 app.get("/api/models", async (req, res) => {
   try {
-    // OpenAI doesn't have a public API to list models like Gemini
-    // So we'll return the commonly available models
     const models = [
       {
-        name: "gemini-2.5-flash",
+        name: "gemini-1.5-flash-latest", 
         description: "Fast and efficient for most tasks",
-      }/*,
-      { name: "gpt-4", description: "Most capable model (requires paid plan)" },
+      },
       {
-        name: "gpt-4-turbo",
-        description: "Latest GPT-4 with better performance",
-      },*/
+        name: "gemini-1.5-pro-latest", // Add backup model
+        description: "More capable model for complex tasks",
+      }
     ];
 
     res.json({
       success: true,
       models: models,
-      current: "gemini-2.5-flash",
+      current: "gemini-1.5-flash-latest",
     });
   } catch (error) {
     console.error("Error listing models:", error);
@@ -99,7 +96,7 @@ app.post("/api/proposals/generate", async (req, res) => {
       id: `prop_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
       proposal: proposal,
       generatedAt: new Date().toISOString(),
-      model: "gemini-2.5-flash",
+      model: "gemini-1.5-flash-latest", // ✅ Correct model name
     });
   } catch (error) {
     console.error("Error generating proposal:", error);
