@@ -19,5 +19,6 @@ router.get(
 );
 router.put("/:id", authenticateUser, ProposalController.updateProposal);
 router.post("/:id/submit", authenticateUser, ProposalController.submitProposal);
+router.post("/:id/edit", ProposalController.editProposal)
 
 module.exports = router;
