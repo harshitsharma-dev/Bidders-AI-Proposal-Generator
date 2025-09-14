@@ -10,31 +10,36 @@ const SubscriptionPlans = ({
 
   const plans = [
     {
-      id: "basic",
-      name: "Basic",
-      price: 29,
+      id: "base",
+      name: "Base Plan",
+      price: 20,
       icon: Building,
       color: "blue",
       description: "Perfect for small companies getting started",
       features: [
-        "10 AI proposals per month",
+        "5 AI proposal generations per month",
+        "5 proposal downloads per month",
         "Basic tender matching",
         "Email support",
         "Standard templates",
         "Basic analytics",
       ],
-      limitations: ["Limited proposal customization", "Basic support only"],
+      limitations: ["Limited to 5 proposals and downloads", "Basic support only"],
+      stripePriceId: "price_base_plan", // Replace with actual Stripe price ID
+      proposalLimit: 5,
+      downloadLimit: 5,
     },
     {
-      id: "professional",
-      name: "Professional",
-      price: 99,
+      id: "premium",
+      name: "Premium Plan",
+      price: 100,
       icon: Star,
       color: "green",
       popular: true,
       description: "Most popular for growing businesses",
       features: [
-        "Unlimited AI proposals",
+        "20 AI proposal generations per month",
+        "20 proposal downloads per month",
         "Advanced tender matching",
         "Priority support",
         "Custom templates",
@@ -43,25 +48,9 @@ const SubscriptionPlans = ({
         "Export capabilities",
       ],
       limitations: [],
-    },
-    {
-      id: "enterprise",
-      name: "Enterprise",
-      price: 299,
-      icon: Crown,
-      color: "purple",
-      description: "For large organizations with custom needs",
-      features: [
-        "Everything in Professional",
-        "Custom integrations",
-        "Dedicated account manager",
-        "White-label solutions",
-        "API access",
-        "Custom workflows",
-        "Advanced security",
-        "Training & onboarding",
-      ],
-      limitations: [],
+      stripePriceId: "price_premium_plan", // Replace with actual Stripe price ID
+      proposalLimit: 20,
+      downloadLimit: 20,
     },
   ];
 
@@ -109,7 +98,7 @@ const SubscriptionPlans = ({
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {plans.map((plan) => {
           const Icon = plan.icon;
           const colors = getColorClasses(plan.color, selectedPlan === plan.id);
@@ -152,7 +141,7 @@ const SubscriptionPlans = ({
                     </span>
                     <span className="text-gray-600 ml-1">/month</span>
                   </div>
-                  <p className="text-sm text-gray-500 mt-1">Billed monthly</p>
+                  <p className="text-sm text-gray-500 mt-1">+ GST • Billed monthly</p>
                 </div>
 
                 {/* Features */}
@@ -191,39 +180,37 @@ const SubscriptionPlans = ({
           Feature Comparison
         </h3>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
           <div className="font-medium text-gray-900">Features</div>
-          <div className="font-medium text-center text-blue-600">Basic</div>
+          <div className="font-medium text-center text-blue-600">Base Plan</div>
           <div className="font-medium text-center text-green-600">
-            Professional
-          </div>
-          <div className="font-medium text-center text-purple-600">
-            Enterprise
+            Premium Plan
           </div>
 
           {/* AI Proposals */}
-          <div className="text-gray-700">AI Proposals</div>
-          <div className="text-center">10/month</div>
-          <div className="text-center">Unlimited</div>
-          <div className="text-center">Unlimited</div>
+          <div className="text-gray-700">AI Proposal Generations</div>
+          <div className="text-center">5/month</div>
+          <div className="text-center">20/month</div>
+
+          {/* Downloads */}
+          <div className="text-gray-700">Proposal Downloads</div>
+          <div className="text-center">5/month</div>
+          <div className="text-center">20/month</div>
 
           {/* Support */}
           <div className="text-gray-700">Support</div>
           <div className="text-center">Email</div>
           <div className="text-center">Priority</div>
-          <div className="text-center">Dedicated</div>
 
           {/* Analytics */}
           <div className="text-gray-700">Analytics</div>
           <div className="text-center">Basic</div>
           <div className="text-center">Advanced</div>
-          <div className="text-center">Custom</div>
 
-          {/* API Access */}
-          <div className="text-gray-700">API Access</div>
-          <div className="text-center">-</div>
-          <div className="text-center">-</div>
-          <div className="text-center">✓</div>
+          {/* Templates */}
+          <div className="text-gray-700">Templates</div>
+          <div className="text-center">Standard</div>
+          <div className="text-center">Custom</div>
         </div>
       </div>
 

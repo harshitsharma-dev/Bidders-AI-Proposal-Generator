@@ -48,11 +48,54 @@ model Company {
   updatedAt         DateTime @updatedAt
 
   // Relationships
-  user      User       @relation(fields: [userId], references: [id])
-  proposals Proposal[]
-  payments  Payment[]
+  user           User           @relation(fields: [userId], references: [id])
+  proposals      Proposal[]
+  payments       Payment[]
+  subscriptions  Subscription[]
+  usageRecords   UsageRecord[]
 
   @@map("companies")
+}
+
+model Subscription {
+  id                    String            @id @default(cuid())
+  companyId             String
+  planType              SubscriptionPlan
+  status                SubscriptionStatus @default(ACTIVE)
+  stripeSubscriptionId  String?           @unique
+  stripeCustomerId      String?
+  currentPeriodStart    DateTime
+  currentPeriodEnd      DateTime
+  proposalLimit         Int               // Monthly limit
+  downloadsUsed         Int               @default(0)
+  proposalsGenerated    Int               @default(0)
+  amount                BigInt            // Amount in cents
+  currency              String            @default("USD")
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+
+  // Relationships
+  company       Company       @relation(fields: [companyId], references: [id])
+  usageRecords  UsageRecord[]
+
+  @@map("subscriptions")
+}
+
+model UsageRecord {
+  id             String      @id @default(cuid())
+  companyId      String
+  subscriptionId String?
+  type           UsageType
+  proposalId     String?
+  description    String?
+  createdAt      DateTime    @default(now())
+
+  // Relationships
+  company      Company       @relation(fields: [companyId], references: [id])
+  subscription Subscription? @relation(fields: [subscriptionId], references: [id])
+  proposal     Proposal?     @relation(fields: [proposalId], references: [id])
+
+  @@map("usage_records")
 }
 
 model Tender {
@@ -86,13 +129,15 @@ model Proposal {
   aiGenerated  Boolean  @default(false)
   status       ProposalStatus @default(DRAFT)
   submittedAt  DateTime?
+  downloadedAt DateTime?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
   // Relationships
-  tender   Tender    @relation(fields: [tenderId], references: [id])
-  company  Company   @relation(fields: [companyId], references: [id])
-  payments Payment[]
+  tender       Tender        @relation(fields: [tenderId], references: [id])
+  company      Company       @relation(fields: [companyId], references: [id])
+  payments     Payment[]
+  usageRecords UsageRecord[]
 
   @@map("proposals")
 }
@@ -168,4 +213,22 @@ enum NotificationType {
   PROPOSAL_UPDATE
   PAYMENT_UPDATE
   SYSTEM_ALERT
+}
+
+enum SubscriptionPlan {
+  BASE
+  PREMIUM
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELLED
+  EXPIRED
+  PAST_DUE
+}
+
+enum UsageType {
+  PROPOSAL_GENERATION
+  PROPOSAL_DOWNLOAD
+  API_CALL
 }
