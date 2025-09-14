@@ -6,11 +6,11 @@ class GeminiService {
     this.genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
     // Use flash model for faster responses and lower rate limits
     this.model = this.genAI.getGenerativeModel({
-      model: "gemini-1.5-flash",
+      model: "gemini-1.5-flash-latest",
       generationConfig: {
         temperature: 0.7,
         topP: 0.8,
-        maxOutputTokens: 2048,
+        maxOutputTokens: 4096, // Increased for longer proposals
       },
     });
     this.lastRequestTime = 0;
@@ -18,22 +18,44 @@ class GeminiService {
   }
 
   async generateProposal(tender, companyProfile) {
-    try {
-      const prompt = this.createProposalPrompt(tender, companyProfile);
+    // Add input validation
+    if (!tender || !tender.title || !tender.description) {
+      throw new Error("Tender information is incomplete");
+    }
+    
+    if (!companyProfile || !companyProfile.companyName) {
+      throw new Error("Company profile is incomplete");
+    }
 
+    try {
+      // Add rate limiting
+      const now = Date.now();
+      const timeSinceLastRequest = now - this.lastRequestTime;
+      if (timeSinceLastRequest < this.minRequestInterval) {
+        await new Promise((resolve) =>
+          setTimeout(resolve, this.minRequestInterval - timeSinceLastRequest)
+        );
+      }
+      this.lastRequestTime = Date.now();
+
+      const prompt = this.createProposalPrompt(tender, companyProfile);
       const result = await this.model.generateContent(prompt);
       const response = await result.response;
-
       return response.text();
     } catch (error) {
       console.error("Gemini API Error:", error);
 
       // Try alternative model if primary fails
-      if (error.message.includes("not found")) {
+      if (error.message.includes("not found") || error.message.includes("model")) {
         try {
-          console.log("Trying alternative model: gemini-1.5-flash");
+          console.log("Trying alternative model: gemini-1.5-pro-latest");
           const altModel = this.genAI.getGenerativeModel({
-            model: "gemini-1.5-flash",
+            model: "gemini-1.5-pro-latest", // ✅ Use Pro model as fallback
+            generationConfig: {
+              temperature: 0.7,
+              topP: 0.8,
+              maxOutputTokens: 4096,
+            },
           });
           const prompt = this.createProposalPrompt(tender, companyProfile);
           const result = await altModel.generateContent(prompt);
@@ -41,56 +63,94 @@ class GeminiService {
           return response.text();
         } catch (altError) {
           console.error("Alternative model also failed:", altError);
-          throw new Error(`Gemini API Error: ${error.message}`);
+          throw new Error(`Both Gemini models failed: ${altError.message}`);
         }
       }
 
-      throw error;
+      throw new Error(`Gemini API Error: ${error.message}`);
+    }
+  }
+
+  async editProposal(editPrompt) {
+    try {
+      const result = await this.model.generateContent(editPrompt);
+      const response = await result.response;
+      return response.text();
+    } catch (error) {
+      console.error("Gemini API Error during edit:", error);
+      
+      // Try fallback model for edits too
+      if (error.message.includes("not found") || error.message.includes("model")) {
+        try {
+          console.log("Trying alternative model for edit");
+          const altModel = this.genAI.getGenerativeModel({
+            model: "gemini-1.5-pro-latest",
+            generationConfig: {
+              temperature: 0.7,
+              topP: 0.8,
+              maxOutputTokens: 4096,
+            },
+          });
+          const result = await altModel.generateContent(structuredPrompt);
+          const response = await result.response;
+          return response.text();
+        } catch (altError) {
+          console.error("Alternative model failed for edit:", altError);
+          throw new Error(`Both models failed for editing: ${altError.message}`);
+        }
+      }
+      
+      throw new Error(`Failed to edit proposal: ${error.message}`);
     }
   }
 
   createProposalPrompt(tender, profile) {
     return `
-            Generate a professional business proposal for the following tender:
-            
-            TENDER DETAILS:
-            Title: ${tender.title}
-            Description: ${tender.description}
-            Budget: $${tender.budget}
-            Requirements: ${
-              tender.requirements
-                ? tender.requirements.join(", ")
-                : "Not specified"
-            }
-            Country: ${tender.country || "Not specified"}
-            
-            COMPANY PROFILE:
-            Company Name: ${profile.companyName}
-            Capabilities: ${
-              profile.capabilities
-                ? profile.capabilities.join(", ")
-                : "Not specified"
-            }
-            Experience: ${profile.experience} years
-            Completed Projects: ${profile.completedProjects}
-            Success Rate: ${profile.successRate}%
-            Certifications: ${
-              profile.certifications
-                ? profile.certifications.join(", ")
-                : "None specified"
-            }
-            
-            Please generate a comprehensive proposal that includes:
-            1. Executive Summary
-            2. Understanding of Requirements
-            3. Technical Approach
-            4. Company Qualifications
-            5. Project Timeline
-            6. Budget Consideration
-            
-            Make it professional, specific to the tender requirements, and highlight the company's relevant experience.
-            Format the response in a clean, business proposal format.
-        `;
+You are a professional proposal writer. Generate a comprehensive business proposal based on the following information:
+
+TENDER INFORMATION:
+- Title: ${tender.title || 'Not specified'}
+- Description: ${tender.description || 'Not specified'}
+- Budget: $${tender.budget ? tender.budget.toLocaleString() : 'Not specified'}
+- Requirements: ${tender.requirements && tender.requirements.length > 0 ? tender.requirements.join(', ') : 'Not specified'}
+- Location: ${tender.country || 'Not specified'}
+- Deadline: ${tender.deadline || 'Not specified'}
+
+COMPANY INFORMATION:
+- Company: ${profile.companyName || 'Not specified'}
+- Core Capabilities: ${profile.capabilities && profile.capabilities.length > 0 ? profile.capabilities.join(', ') : 'Not specified'}
+- Years of Experience: ${profile.experience || 'Not specified'}
+- Completed Projects: ${profile.completedProjects || 'Not specified'}
+- Success Rate: ${profile.successRate || 'Not specified'}%
+- Certifications: ${profile.certifications && profile.certifications.length > 0 ? profile.certifications.join(', ') : 'None'}
+- Countries of Operation: ${profile.countries && profile.countries.length > 0 ? profile.countries.join(', ') : 'Not specified'}
+
+PROPOSAL REQUIREMENTS:
+Generate a professional proposal with these sections:
+
+1. EXECUTIVE SUMMARY
+2. PROJECT UNDERSTANDING
+3. TECHNICAL APPROACH & METHODOLOGY
+4. COMPANY QUALIFICATIONS & EXPERIENCE
+5. PROJECT TIMELINE & MILESTONES
+6. TEAM STRUCTURE & EXPERTISE
+7. BUDGET BREAKDOWN & VALUE PROPOSITION
+8. RISK MANAGEMENT
+9. QUALITY ASSURANCE
+10. CONCLUSION & NEXT STEPS
+
+FORMATTING GUIDELINES:
+- Use clear section headers (ALL CAPS)
+- Write in professional business language
+- Be specific and avoid generic statements
+- Include actual data from the provided information
+- Keep each section concise but comprehensive
+- Use bullet points where appropriate
+- Do not use markdown formatting (**, *, etc.)
+- Write in plain text format
+
+Generate a complete, professional proposal that directly addresses the tender requirements and showcases the company's relevant experience and capabilities.
+`;
   }
 }
 

@@ -227,6 +227,8 @@ const TenderForge = () => {
     },
   ]);
   const [generatedProposal, setGeneratedProposal] = useState("");
+  const [proposalId, setProposalId] = useState(null);
+  const [userMessage, setUserMessage] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [backendStatus, setBackendStatus] = useState("checking"); // 'online', 'offline', 'checking'
 
@@ -499,6 +501,8 @@ const TenderForge = () => {
 
       if (response.success && response.proposal) {
         setGeneratedProposal(response.proposal);
+        setProposalId(response.id || null);
+
         console.log("Proposal generated successfully");
       } else {
         throw new Error(response.message || "Failed to generate proposal");
@@ -561,6 +565,26 @@ ${profile.companyName}
       setIsGenerating(false);
     }
   };
+
+  const editProposal = async (proposalId, currentContent, userMessage) => {
+    try {
+      if (generatedProposal.trim() === "" || userMessage.trim() === "") {
+        throw new Error("No proposal content to edit/No update prompts submitted");
+      }
+
+      const response = await apiService.editProposal(proposalId, currentContent, userMessage);
+
+      if (response.success && response.data && response.data.proposal) {
+        setGeneratedProposal(response.data.proposal.content);
+        //setProposalId(response.data.proposal.id || null);
+        console.log("Proposal updated successfully: ", response.data.proposal.content);
+      } else {
+        throw new Error(response.message || "Failed to update proposal");
+      }
+    } catch (error) {
+      console.error("Error generating proposal:", error);
+    }
+  }
 
   // Payment and subscription handlers
   const handleSelectPlan = async (plan) => {
@@ -1208,7 +1232,21 @@ ${profile.companyName}
                   placeholder="Your AI-generated proposal will appear here..."
                 />
 
+                <textarea
+                  value={userMessage}
+                  onChange={(e) => setUserMessage(e.target.value)}
+                  rows={10}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-sm resize-none"
+                  placeholder="Edit your proposal..."
+                />
+
                 <div className="mt-6 flex flex-wrap gap-3">
+                  <button 
+                  onClick={() => editProposal(proposalId, generatedProposal, userMessage)}
+                  className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2">
+                    <FileText className="h-4 w-4" />
+                    <span>UPDATE PROPOSAL</span>
+                  </button>
                   <button className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2">
                     <FileText className="h-4 w-4" />
                     <span>Download PDF</span>
