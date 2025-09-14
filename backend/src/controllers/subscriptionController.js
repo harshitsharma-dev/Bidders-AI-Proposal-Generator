@@ -3,6 +3,43 @@ const subscriptionService = require('../services/subscriptionService');
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 class SubscriptionController {
+  // Get subscription plans (public endpoint)
+  static async getPlans(req, res) {
+    try {
+      const plans = {
+        BASE: {
+          name: 'Base Plan',
+          basePrice: 20,
+          gst: 3.6,
+          totalPrice: 23.6,
+          downloadLimit: 5,
+          interval: 'month',
+          description: 'Perfect for small businesses'
+        },
+        PREMIUM: {
+          name: 'Premium Plan',
+          basePrice: 100,
+          gst: 18,
+          totalPrice: 118,
+          downloadLimit: 20,
+          interval: 'month',
+          description: 'Ideal for larger organizations'
+        }
+      };
+
+      res.json({
+        success: true,
+        plans: plans
+      });
+    } catch (error) {
+      console.error('Error getting plans:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to get subscription plans'
+      });
+    }
+  }
+
   // Create new subscription
   static async createSubscription(req, res) {
     try {
@@ -228,6 +265,46 @@ class SubscriptionController {
       res.status(500).json({
         success: false,
         message: 'Failed to get usage analytics'
+      });
+    }
+  }
+
+  // Get user subscription
+  static async getUserSubscription(req, res) {
+    try {
+      const companyId = req.user.companyId;
+      const subscription = await subscriptionService.getSubscriptionDetails(companyId);
+
+      res.json({
+        success: true,
+        subscription: subscription
+      });
+    } catch (error) {
+      console.error('Error getting user subscription:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to get user subscription'
+      });
+    }
+  }
+
+  // Record download
+  static async recordDownload(req, res) {
+    try {
+      const { proposalId } = req.body;
+      const companyId = req.user.companyId;
+
+      await subscriptionService.recordProposalDownload(companyId, proposalId);
+
+      res.json({
+        success: true,
+        message: 'Download recorded successfully'
+      });
+    } catch (error) {
+      console.error('Error recording download:', error);
+      res.status(500).json({
+        success: false,
+        message: error.message || 'Failed to record download'
       });
     }
   }

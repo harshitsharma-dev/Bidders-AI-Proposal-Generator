@@ -1,31 +1,51 @@
-// routes/subscriptions.js
 const express = require('express');
-const router = express.Router();
-const SubscriptionController = require('../controllers/subscriptionController');
+const { body } = require('express-validator');
 const { authenticateUser } = require('../middleware/auth');
+const SubscriptionController = require('../controllers/subscriptionController');
 
-// All routes require authentication
-router.use(authenticateUser);
+const router = express.Router();
 
-// Create subscription
-router.post('/', SubscriptionController.createSubscription);
+// Get subscription plans (public route)
+router.get('/plans', SubscriptionController.getPlans);
 
-// Get current subscription
-router.get('/', SubscriptionController.getSubscription);
+// Create subscription (requires authentication)
+router.post('/create',
+  authenticateUser,
+  [
+    body('planType')
+      .isIn(['BASE', 'PREMIUM'])
+      .withMessage('Plan type must be either BASE or PREMIUM')
+  ],
+  SubscriptionController.createSubscription
+);
 
-// Get usage analytics
-router.get('/analytics', SubscriptionController.getUsageAnalytics);
+// Get user subscription (requires authentication)
+router.get('/user', authenticateUser, SubscriptionController.getUserSubscription);
 
-// Check proposal generation eligibility
-router.get('/eligibility/proposals', SubscriptionController.checkProposalEligibility);
+// Check download eligibility (requires authentication)
+router.get('/eligibility', authenticateUser, SubscriptionController.checkDownloadEligibility);
 
-// Check download eligibility
-router.get('/eligibility/downloads', SubscriptionController.checkDownloadEligibility);
+// Record download (requires authentication)
+router.post('/record-download',
+  authenticateUser,
+  [
+    body('proposalId')
+      .notEmpty()
+      .withMessage('Proposal ID is required')
+  ],
+  SubscriptionController.recordDownload
+);
 
-// Cancel subscription
-router.delete('/', SubscriptionController.cancelSubscription);
+// Cancel subscription (requires authentication)
+router.post('/cancel', authenticateUser, SubscriptionController.cancelSubscription);
 
-// Webhook endpoint (no auth required)
-router.post('/webhook', express.raw({type: 'application/json'}), SubscriptionController.handleWebhook);
+// Get usage analytics (requires authentication)
+router.get('/analytics', authenticateUser, SubscriptionController.getUsageAnalytics);
+
+// Stripe webhook (no authentication required - uses webhook signature)
+router.post('/webhook', 
+  express.raw({ type: 'application/json' }), 
+  SubscriptionController.handleWebhook
+);
 
 module.exports = router;
