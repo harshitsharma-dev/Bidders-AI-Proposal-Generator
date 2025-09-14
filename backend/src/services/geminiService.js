@@ -6,7 +6,7 @@ class GeminiService {
     this.genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
     // Use flash model for faster responses and lower rate limits
     this.model = this.genAI.getGenerativeModel({
-      model: "gemini-2.5-flash",
+      model: "gemini-1.5-flash",
       generationConfig: {
         temperature: 0.7,
         topP: 0.8,
@@ -31,9 +31,9 @@ class GeminiService {
       // Try alternative model if primary fails
       if (error.message.includes("not found")) {
         try {
-          console.log("Trying alternative model: gemini-1.5-flash");
+          console.log("Trying alternative model: gemini-2.5-flash");
           const altModel = this.genAI.getGenerativeModel({
-            model: "gemini-1.5-flash",
+            model: "gemini-2.5-flash",
           });
           const prompt = this.createProposalPrompt(tender, companyProfile);
           const result = await altModel.generateContent(prompt);
@@ -100,7 +100,7 @@ class GeminiService {
             6. Budget Consideration
             
             Make it professional, specific to the tender requirements, and highlight the company's relevant experience.
-            Format the response in a clean, business proposal format.
+            Format the response in a clean, business proposal format. Do not use bold or italics. Avoid using placeholders for any sections. Use the actual data provided.
         `;
   }
 }

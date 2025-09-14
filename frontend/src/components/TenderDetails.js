@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import ApiService from '../services/api';
 import {
   MapPin,
   Calendar,
@@ -18,6 +19,27 @@ import {
   Star,
 } from "lucide-react";
 
+const mockProfile = {
+  id: 1,
+  companyName: "TenderForge Solutions",
+  email: "info@tenderforge.com",
+  capabilities: [
+    "AI/ML",
+    "Cloud Computing",
+    "Cybersecurity",
+    "Project Management",
+  ],
+  experience: 12,
+  completedProjects: 89,
+  successRate: 94.2,
+  totalRevenue: 24500000,
+  certifications: ["ISO 27001", "SOC 2 Type II", "AWS Certified"],
+  countries: ["USA", "Canada", "UK"],
+  activeProposals: 12,
+  recentWins: 8,
+};
+
+
 const TenderDetails = ({
   tender,
   onBack,
@@ -32,9 +54,52 @@ const TenderDetails = ({
   const [proposalContent, setProposalContent] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [draftSaved, setDraftSaved] = useState(false);
-
+  const [userMessage, setUserMessage] = useState("");
+  const [proposalId, setProposalId] = useState(null);
   const isSaved = savedTenders?.includes(tender.id);
 
+  const generateProposal = async () => {
+    setIsGenerating(true)
+    setProposalContent("")
+    try {
+      console.log("Generating proposal for tender: ", tender.title)
+      const response = await ApiService.generateProposal(tender,  mockProfile);
+
+      if (response.success && response.proposal) {
+        setProposalContent(response.proposal);
+        setProposalId(response.id || null);
+        setProposalGenerated(true);
+        onGenerateProposal?.(tender.id, response.proposal);
+      }
+    } catch (error) {
+      console.error("Error generating proposal:", error);
+      alert("Failed to generate proposal. Please try again.");
+    } finally {
+      setIsGenerating(false)
+    }
+  }
+
+  const editProposal = async (proposalId, currentContent, userMessage) => {
+      try {
+        if (currentContent.trim() === "" || userMessage.trim() === "") {
+          throw new Error("No proposal content to edit/No update prompts submitted");
+        }
+  
+        const response = await ApiService.editProposal(proposalId, currentContent, userMessage);
+  
+        if (response.success && response.data && response.data.proposal) {
+          setProposalContent(response.data.proposal.content);
+          //setProposalId(response.data.proposal.id || null);
+          console.log("Proposal updated successfully: ", response.data.proposal.content);
+        } else {
+          throw new Error(response.message || "Failed to update proposal");
+        }
+      } catch (error) {
+        console.error("Error generating proposal:", error);
+      }
+    }
+
+/*
   const handleGenerateProposal = async () => {
     setIsGenerating(true);
     try {
@@ -145,7 +210,7 @@ Project Team
       setIsGenerating(false);
     }
   };
-
+*/
   const handleDownloadPDF = () => {
     // Create a simple text file for demo (in real app, would generate proper PDF)
     const element = document.createElement("a");
@@ -308,7 +373,7 @@ Project Team
             </div>
 
             <button
-              onClick={handleGenerateProposal}
+              onClick={generateProposal}
               disabled={isGenerating}
               className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
             >
@@ -364,6 +429,19 @@ Project Team
                 {proposalContent}
               </pre>
             </div>
+            <textarea
+                  value={userMessage}
+                  onChange={(e) => setUserMessage(e.target.value)}
+                  rows={10}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-sm resize-none"
+                  placeholder="Edit your proposal..."
+                />
+                 <button 
+                  onClick={() => editProposal( proposalId, proposalContent, userMessage)}
+                  className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2">
+                    <FileText className="h-4 w-4" />
+                    <span>UPDATE PROPOSAL</span>
+                  </button>
           </div>
         )}
       </div>
